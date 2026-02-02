@@ -163,16 +163,24 @@ class SettingsController extends ChangeNotifier {
     await _prefs.setBool(_topicKey, _pushTopicEnabled);
 
     if (!prevNotifications && _notificationsEnabled) {
-      await FirebaseMessaging.instance.requestPermission();
-      await _notifications.requestPermissions();
-      await _notifications.showTestNotification();
+      try {
+        await FirebaseMessaging.instance.requestPermission();
+        await _notifications.requestPermissions();
+        await _notifications.showTestNotification();
+      } catch (_) {
+        // Push/APNs не настроены или разрешение отклонено — приложение не падает
+      }
     }
 
     if (prevTopic != _pushTopicEnabled) {
-      if (_pushTopicEnabled) {
-        await FirebaseMessaging.instance.subscribeToTopic('finance_alerts');
-      } else {
-        await FirebaseMessaging.instance.unsubscribeFromTopic('finance_alerts');
+      try {
+        if (_pushTopicEnabled) {
+          await FirebaseMessaging.instance.subscribeToTopic('finance_alerts');
+        } else {
+          await FirebaseMessaging.instance.unsubscribeFromTopic('finance_alerts');
+        }
+      } catch (_) {
+        // FCM-токен недоступен (нет APNs/разрешения) — подписка на топик пропускается
       }
     }
 
@@ -180,7 +188,9 @@ class SettingsController extends ChangeNotifier {
   }
 
   Future<void> sendTestNotification() async {
-    await _notifications.requestPermissions();
-    await _notifications.showTestNotification();
+    try {
+      await _notifications.requestPermissions();
+      await _notifications.showTestNotification();
+    } catch (_) {}
   }
 }

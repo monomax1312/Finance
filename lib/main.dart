@@ -16,17 +16,29 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp();
 }
 
+Future<void> _initFirebase() async {
+  try {
+    await Firebase.initializeApp();
+    FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+    await FirebaseMessaging.instance.setForegroundNotificationPresentationOptions(
+      alert: true,
+      badge: true,
+      sound: true,
+    );
+  } catch (e, st) {
+    assert(() {
+      // ignore: avoid_print
+      print('Firebase init skipped or failed: $e\n$st');
+      return true;
+    }());
+  }
+}
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await initializeDateFormatting('ru');
 
-  await Firebase.initializeApp();
-  FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
-  await FirebaseMessaging.instance.setForegroundNotificationPresentationOptions(
-    alert: true,
-    badge: true,
-    sound: true,
-  );
+  await _initFirebase();
 
   final prefs = await SharedPreferences.getInstance();
   final notificationService = NotificationService(prefs: prefs);
@@ -34,7 +46,9 @@ Future<void> main() async {
   final storage = TransactionsStorage(prefs);
   final api = MockFinanceApi(storage: storage);
   final repository = TransactionsRepositoryImpl(api: api);
-  FirebaseMessaging.onMessage.listen(notificationService.showRemoteMessage);
+  try {
+    FirebaseMessaging.onMessage.listen(notificationService.showRemoteMessage);
+  } catch (_) {}
   final settingsController = SettingsController(prefs, notificationService);
   await settingsController.load();
 
