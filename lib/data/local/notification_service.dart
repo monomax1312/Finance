@@ -24,7 +24,15 @@ class NotificationService {
       return;
     }
     const android = AndroidInitializationSettings('@mipmap/ic_launcher');
-    const initSettings = InitializationSettings(android: android);
+    const darwin = DarwinInitializationSettings(
+      requestAlertPermission: true,
+      requestBadgePermission: true,
+      requestSoundPermission: true,
+    );
+    const initSettings = InitializationSettings(
+      android: android,
+      iOS: darwin,
+    );
     await _plugin.initialize(initSettings);
     await _createAndroidChannel();
   }
@@ -37,6 +45,11 @@ class NotificationService {
         AndroidFlutterLocalNotificationsPlugin>();
     if (android != null) {
       await _requestAndroidPermission(android);
+    }
+    final ios = _plugin.resolvePlatformSpecificImplementation<
+        IOSFlutterLocalNotificationsPlugin>();
+    if (ios != null) {
+      await ios.requestPermissions(alert: true, badge: true, sound: true);
     }
   }
 
@@ -51,7 +64,11 @@ class NotificationService {
       importance: Importance.high,
       priority: Priority.high,
     );
-    const details = NotificationDetails(android: androidDetails);
+    const darwinDetails = DarwinNotificationDetails();
+    const details = NotificationDetails(
+      android: androidDetails,
+      iOS: darwinDetails,
+    );
     await _plugin.show(
       0,
       'Finance Tracker',
@@ -82,7 +99,11 @@ class NotificationService {
       importance: Importance.high,
       priority: Priority.high,
     );
-    const details = NotificationDetails(android: androidDetails);
+    const darwinDetails = DarwinNotificationDetails();
+    const details = NotificationDetails(
+      android: androidDetails,
+      iOS: darwinDetails,
+    );
     await _plugin.show(message.hashCode, title, body, details);
   }
 
@@ -166,7 +187,11 @@ class NotificationService {
       importance: Importance.high,
       priority: Priority.high,
     );
-    const details = NotificationDetails(android: androidDetails);
+    const darwinDetails = DarwinNotificationDetails();
+    const details = NotificationDetails(
+      android: androidDetails,
+      iOS: darwinDetails,
+    );
     await _plugin.show(DateTime.now().millisecond, title, body, details);
   }
 
