@@ -1,5 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../core/logger/app_logger.dart';
 import '../../data/local/notification_service.dart';
 import '../../domain/entities/transaction.dart';
 import '../../domain/repositories/transactions_repository.dart';
@@ -39,7 +40,13 @@ class TransactionsBloc extends Bloc<TransactionsEvent, TransactionsState> {
           categories: categories,
         ),
       );
-    } catch (error) {
+    } catch (error, stackTrace) {
+      AppLogger.error(
+        'Failed to load transactions',
+        tag: 'TransactionsBloc',
+        error: error,
+        stackTrace: stackTrace,
+      );
       emit(
         state.copyWith(
           isLoading: false,
@@ -62,7 +69,14 @@ class TransactionsBloc extends Bloc<TransactionsEvent, TransactionsState> {
         ),
       );
       await _notifyIfNeeded(updatedList, created);
-    } catch (error) {
+      AppLogger.info('Transaction added: ${created.id}', tag: 'TransactionsBloc');
+    } catch (error, stackTrace) {
+      AppLogger.error(
+        'Failed to add transaction',
+        tag: 'TransactionsBloc',
+        error: error,
+        stackTrace: stackTrace,
+      );
       emit(state.copyWith(errorMessage: 'Не удалось добавить операцию'));
     }
   }
@@ -78,7 +92,14 @@ class TransactionsBloc extends Bloc<TransactionsEvent, TransactionsState> {
           .toList(growable: false);
       emit(state.copyWith(transactions: updatedList));
       await _notifyIfNeeded(updatedList, updated);
-    } catch (error) {
+      AppLogger.info('Transaction updated: ${updated.id}', tag: 'TransactionsBloc');
+    } catch (error, stackTrace) {
+      AppLogger.error(
+        'Failed to update transaction',
+        tag: 'TransactionsBloc',
+        error: error,
+        stackTrace: stackTrace,
+      );
       emit(state.copyWith(errorMessage: 'Не удалось обновить операцию'));
     }
   }
@@ -94,7 +115,14 @@ class TransactionsBloc extends Bloc<TransactionsEvent, TransactionsState> {
           .toList(growable: false);
       emit(state.copyWith(transactions: updatedList));
       await _notifyIfNeeded(updatedList, null);
-    } catch (error) {
+      AppLogger.info('Transaction deleted: ${event.id}', tag: 'TransactionsBloc');
+    } catch (error, stackTrace) {
+      AppLogger.error(
+        'Failed to delete transaction',
+        tag: 'TransactionsBloc',
+        error: error,
+        stackTrace: stackTrace,
+      );
       emit(state.copyWith(errorMessage: 'Не удалось удалить операцию'));
     }
   }
@@ -106,7 +134,14 @@ class TransactionsBloc extends Bloc<TransactionsEvent, TransactionsState> {
     try {
       await repository.clearTransactions();
       emit(state.copyWith(transactions: const []));
-    } catch (error) {
+      AppLogger.info('All transactions cleared', tag: 'TransactionsBloc');
+    } catch (error, stackTrace) {
+      AppLogger.error(
+        'Failed to clear transactions',
+        tag: 'TransactionsBloc',
+        error: error,
+        stackTrace: stackTrace,
+      );
       emit(state.copyWith(errorMessage: 'Не удалось очистить данные'));
     }
   }

@@ -2,6 +2,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../core/logger/app_logger.dart';
 import '../../domain/entities/transaction.dart';
 
 class NotificationService {
@@ -23,18 +24,28 @@ class NotificationService {
     if (!enablePlatform) {
       return;
     }
-    const android = AndroidInitializationSettings('@mipmap/ic_launcher');
-    const darwin = DarwinInitializationSettings(
-      requestAlertPermission: true,
-      requestBadgePermission: true,
-      requestSoundPermission: true,
-    );
-    const initSettings = InitializationSettings(
-      android: android,
-      iOS: darwin,
-    );
-    await _plugin.initialize(initSettings);
-    await _createAndroidChannel();
+    try {
+      const android = AndroidInitializationSettings('@mipmap/ic_launcher');
+      const darwin = DarwinInitializationSettings(
+        requestAlertPermission: true,
+        requestBadgePermission: true,
+        requestSoundPermission: true,
+      );
+      const initSettings = InitializationSettings(
+        android: android,
+        iOS: darwin,
+      );
+      await _plugin.initialize(initSettings);
+      await _createAndroidChannel();
+      AppLogger.info('Notification service initialized', tag: 'Notifications');
+    } catch (e, st) {
+      AppLogger.error(
+        'Failed to initialize notification service',
+        tag: 'Notifications',
+        error: e,
+        stackTrace: st,
+      );
+    }
   }
 
   Future<void> requestPermissions() async {
@@ -90,21 +101,31 @@ class NotificationService {
     if (!enablePlatform) {
       return;
     }
-    final title = message.notification?.title ?? 'Finance Tracker';
-    final body = message.notification?.body ?? 'Новое уведомление';
-    const androidDetails = AndroidNotificationDetails(
-      channelId,
-      channelName,
-      channelDescription: 'Уведомления о финансах',
-      importance: Importance.high,
-      priority: Priority.high,
-    );
-    const darwinDetails = DarwinNotificationDetails();
-    const details = NotificationDetails(
-      android: androidDetails,
-      iOS: darwinDetails,
-    );
-    await _plugin.show(message.hashCode, title, body, details);
+    try {
+      final title = message.notification?.title ?? 'Finance Tracker';
+      final body = message.notification?.body ?? 'Новое уведомление';
+      const androidDetails = AndroidNotificationDetails(
+        channelId,
+        channelName,
+        channelDescription: 'Уведомления о финансах',
+        importance: Importance.high,
+        priority: Priority.high,
+      );
+      const darwinDetails = DarwinNotificationDetails();
+      const details = NotificationDetails(
+        android: androidDetails,
+        iOS: darwinDetails,
+      );
+      await _plugin.show(message.hashCode, title, body, details);
+      AppLogger.debug('Remote notification shown: $title', tag: 'Notifications');
+    } catch (e, st) {
+      AppLogger.error(
+        'Failed to show remote notification',
+        tag: 'Notifications',
+        error: e,
+        stackTrace: st,
+      );
+    }
   }
 
   Future<void> handleTransactionChange({

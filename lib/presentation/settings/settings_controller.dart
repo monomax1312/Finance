@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../core/logger/app_logger.dart';
 import '../../data/local/notification_service.dart';
 
 class SettingsController extends ChangeNotifier {
@@ -167,8 +168,14 @@ class SettingsController extends ChangeNotifier {
         await FirebaseMessaging.instance.requestPermission();
         await _notifications.requestPermissions();
         await _notifications.showTestNotification();
-      } catch (_) {
-        // Push/APNs не настроены или разрешение отклонено — приложение не падает
+        AppLogger.info('Notifications enabled and permissions requested', tag: 'Settings');
+      } catch (e, st) {
+        AppLogger.warning(
+          'Failed to enable notifications - Push/APNs may not be configured',
+          tag: 'Settings',
+          error: e,
+          stackTrace: st,
+        );
       }
     }
 
@@ -176,11 +183,18 @@ class SettingsController extends ChangeNotifier {
       try {
         if (_pushTopicEnabled) {
           await FirebaseMessaging.instance.subscribeToTopic('finance_alerts');
+          AppLogger.info('Subscribed to push topic: finance_alerts', tag: 'Settings');
         } else {
           await FirebaseMessaging.instance.unsubscribeFromTopic('finance_alerts');
+          AppLogger.info('Unsubscribed from push topic: finance_alerts', tag: 'Settings');
         }
-      } catch (_) {
-        // FCM-токен недоступен (нет APNs/разрешения) — подписка на топик пропускается
+      } catch (e, st) {
+        AppLogger.warning(
+          'Failed to manage push topic - FCM token may be unavailable',
+          tag: 'Settings',
+          error: e,
+          stackTrace: st,
+        );
       }
     }
 
@@ -191,6 +205,14 @@ class SettingsController extends ChangeNotifier {
     try {
       await _notifications.requestPermissions();
       await _notifications.showTestNotification();
-    } catch (_) {}
+      AppLogger.debug('Test notification sent', tag: 'Settings');
+    } catch (e, st) {
+      AppLogger.error(
+        'Failed to send test notification',
+        tag: 'Settings',
+        error: e,
+        stackTrace: st,
+      );
+    }
   }
 }

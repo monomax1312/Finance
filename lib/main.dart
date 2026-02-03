@@ -5,6 +5,7 @@ import 'package:intl/date_symbol_data_local.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'app.dart';
+import 'core/logger/app_logger.dart';
 import 'data/api/mock_finance_api.dart';
 import 'data/local/notification_service.dart';
 import 'data/local/transactions_storage.dart';
@@ -26,11 +27,12 @@ Future<void> _initFirebase() async {
       sound: true,
     );
   } catch (e, st) {
-    assert(() {
-      // ignore: avoid_print
-      print('Firebase init skipped or failed: $e\n$st');
-      return true;
-    }());
+    AppLogger.warning(
+      'Firebase initialization skipped or failed',
+      tag: 'Firebase',
+      error: e,
+      stackTrace: st,
+    );
   }
 }
 
